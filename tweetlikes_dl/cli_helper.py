@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import click
 import requests
@@ -25,36 +25,32 @@ def write_config(config_path: Union[os.PathLike, str], data: dict):
         json.dump(data, f)
 
 
-def download_medias(medias: List[dict]):
-    is_skip_all = False
-    is_replace_all = False
+def parse_format(user_format: str, media: dict) -> Tuple[str, str]:
+    user_filepath = user_format.format_map(media).split("/")
+    user_folder = "/".join(user_filepath[:-1])
+    user_filename = user_filepath[-1]
+    return user_folder, user_filename
+
+
+def download_medias(
+    medias: List[dict],
+    output_dir: str,
+    user_format: str,
+    ignore_existing: bool,
+):
     with click.progressbar(medias, label="Downloading medias") as bar:
         for media in bar:
             cwd = os.getcwd()
-            target_folder = os.path.join(cwd, "downloads", media["username"])
-            extension = media["url"][-3:]
+
+            output_folder, output_filename = parse_format(user_format, media)
+            target_folder = os.path.join(cwd, output_dir, output_folder)
 
             # Create directory, incase it doesn't exist.
             Path(target_folder).mkdir(parents=True, exist_ok=True)
 
-            target_path = os.path.join(target_folder, f"{media['id']}.{extension}")
-            replace = is_replace_all
-            if os.path.exists(target_path):
-                while not (is_skip_all or is_replace_all):
-                    click.echo("File already exist, do you want to replace?")
-                    value = click.prompt("[Y]es/[N]o/[S]kip all/[R]eplace all")
-                    if value == "Y":
-                        replace = True
-                        break
-                    if value == "R":
-                        replace = True
-                        is_replace_all = True
-                    if value == "S":
-                        is_skip_all = True
+            target_path = os.path.join(target_folder, output_filename)
+            if os.path.exists(target_path) and ignore_existing:
+                click.echo(f"{target_path}: Skipping.")
+                continue
 
-                if not replace:
-                    continue
-
-            if replace:
-                click.echo("Replacing file.")
             download_file(media["url"], target_path)
