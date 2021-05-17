@@ -32,9 +32,9 @@ def get_tweets(
     method,
     username: Optional[str],
     include_retweet: bool,
-    min_id: Optional[int],
+    since_id: Optional[int],
     max_id: Optional[int],
-    min_datetime: datetime,
+    since_datetime: datetime,
     max_datetime: datetime,
     limit: int,
 ) -> Iterator[Status]:
@@ -46,10 +46,10 @@ def get_tweets(
         include_rts=include_retweet,
         include_entities=True,
         tweet_mode="extended",
-        since_id=max_id,
-        max_id=min_id,
+        since_id=since_id,
+        max_id=max_id,
     ).items(limit):
-        if tweet.created_at > min_datetime:
+        if tweet.created_at > since_datetime:
             continue
         if tweet.created_at < max_datetime:
             break

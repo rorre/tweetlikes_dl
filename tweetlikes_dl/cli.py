@@ -67,16 +67,16 @@ def authorize(config: Config, consumer_key: str, consumer_secret: str):
 @cli.command()
 @click.option("--username", "-u", default=None, help="Username to lookup.")
 @click.option("--count", "-c", default=1000, help="Number of liked post to download.")
-@click.option("--min-date", default=None, help="Most recent date to download.")
-@click.option("--max-date", default=None, help="Oldest date to download.")
+@click.option("--max-date", default=None, help="Most recent date to download.")
+@click.option("--since-date", default=None, help="Oldest date to download.")
 @click.option(
-    "--min-id",
+    "--max-id",
     default=None,
     type=int,
     help="Starts downloading after meeting this ID. (Most recent one)",
 )
 @click.option(
-    "--max-id",
+    "--since-id",
     default=None,
     type=int,
     help="Stops downloading after meeting this ID. (Oldest one)",
@@ -87,6 +87,13 @@ def authorize(config: Config, consumer_key: str, consumer_secret: str):
     is_flag=True,
     default=False,
     help="Also download user's retweets.",
+)
+@click.option(
+    "--like",
+    "-l",
+    is_flag=True,
+    default=False,
+    help="Download user's likes instead of timeline (and retweets).",
 )
 @click.option(
     "--output-dir",
@@ -104,13 +111,6 @@ def authorize(config: Config, consumer_key: str, consumer_secret: str):
     help="Format output filename with tokens. (Available tokens: id, extension, filename, url, username)",
 )
 @click.option(
-    "--like",
-    "-l",
-    is_flag=True,
-    default=False,
-    help="Download user's likes instead of timeline (and retweets).",
-)
-@click.option(
     "--ignore-existing",
     is_flag=True,
     default=False,
@@ -121,9 +121,9 @@ def download(
     config: Config,
     username: Optional[str],
     count: int,
-    min_date: Optional[str],
+    since_date: Optional[str],
     max_date: Optional[str],
-    min_id: int,
+    since_id: int,
     max_id: int,
     retweet: bool,
     output_dir: str,
@@ -132,10 +132,10 @@ def download(
     ignore_existing: bool,
 ):
     """Batch download medias from user's timeline or likes."""
-    if min_date:
-        min_datetime = parse(min_date)
+    if since_date:
+        since_datetime = parse(since_date)
     else:
-        min_datetime = datetime.max
+        since_datetime = datetime.max
 
     if max_date:
         max_datetime = parse(max_date)
@@ -149,9 +149,9 @@ def download(
             method,
             username,
             retweet,
-            min_id,
+            since_id,
             max_id,
-            min_datetime,
+            since_datetime,
             max_datetime,
             count,
         )
