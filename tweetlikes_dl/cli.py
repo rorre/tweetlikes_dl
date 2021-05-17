@@ -135,12 +135,12 @@ def download(
     if since_date:
         since_datetime = parse(since_date)
     else:
-        since_datetime = datetime.max
+        since_datetime = datetime.min
 
     if max_date:
         max_datetime = parse(max_date)
     else:
-        max_datetime = datetime.min
+        max_datetime = datetime.max
 
     method = config.api.favorites if like else config.api.user_timeline
     click.echo("Fetching tweets...")

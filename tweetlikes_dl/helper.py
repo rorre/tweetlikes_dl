@@ -49,10 +49,10 @@ def get_tweets(
         since_id=since_id,
         max_id=max_id,
     ).items(limit):
-        if tweet.created_at > since_datetime:
-            continue
-        if tweet.created_at < max_datetime:
+        if tweet.created_at < since_datetime:
             break
+        if tweet.created_at > max_datetime:
+            continue
 
         yield tweet
 
@@ -69,9 +69,7 @@ def get_media_url(media: dict):
         return valid_videos[0]["url"]
 
 
-def get_medias(api: tweepy.API, status_ids: List[int]):
-    tweets = api.statuses_lookup(status_ids)
-
+def get_medias(api: tweepy.API, tweets: List[Status]):
     medias = []
     for tweet in tweets:
         if "extended_entities" in tweet._json:
@@ -100,8 +98,7 @@ def get_media_metadata(api: tweepy.API, tweets: List[Status]):
     medias = []
     with click.progressbar(chunks(tweets, 100), label="Fetching media URLs") as bar:
         for tweet_chunks in bar:
-            tweet_ids = [t.id for t in tweet_chunks]
-            medias.extend(get_medias(api, tweet_ids))
+            medias.extend(get_medias(api, tweet_chunks))
     return medias
 
 
