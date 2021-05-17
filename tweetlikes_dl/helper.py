@@ -78,6 +78,11 @@ def get_medias(api: tweepy.API, status_ids: List[int]):
             for media in tweet.extended_entities["media"]:
                 media_url = get_media_url(media)
                 filename = os.path.basename(urlparse(media_url).path)
+
+                # Set metadata to retweeted status, if it's a retweet.
+                if hasattr(tweet, "retweeted_status"):
+                    tweet = tweet.retweeted_status
+
                 medias.append(
                     {
                         "id": tweet.id_str,
