@@ -1,48 +1,36 @@
 import os
 from datetime import datetime
-from pathlib import Path
+
 from typing import Optional
 
 import click
-import tweepy
-from appdirs import AppDirs
+
 from dateutil.parser import parse
 from pytest import UsageError
+from tweepy import TweepError
 
-from tweetlikes_dl.cli_helper import download_medias, load_config, write_config
+from tweetlikes_dl.cli_helper import download_medias
 from tweetlikes_dl.helper import create_api, get_media_metadata, get_tweets
-
-
-class Config:
-    api: tweepy.API = None
-
-    def __init__(self):
-        self.appdirs = AppDirs("twitterlikes_dl", "rorre")
-        self.config_path = os.path.join(self.appdirs.user_data_dir, "config.json")
-
-        Path(self.appdirs.user_data_dir).mkdir(parents=True, exist_ok=True)
+from tweetlikes_dl.config import Config
 
 
 @click.group()
 @click.pass_context
 def cli(ctx: click.Context):
     """A simple tool to download twitter medias."""
-    ctx.obj = Config()
+    if not os.path.exists(Config.config_path):
+        raise UsageError("Please run authorize first!")
 
     if ctx.invoked_subcommand == "authorize":
         return
 
-    api = None
-    if not os.path.exists(ctx.obj.config_path):
-        raise UsageError("Please run authorize first!")
-    else:
-        config = load_config(ctx.obj.config_path)
-        api, _, _ = create_api(
-            config["consumer_key"],
-            config["consumer_secret"],
-            config["access_token"],
-            config["access_token_secret"],
-        )
+    ctx.obj = Config.load()
+    api, _, _ = create_api(
+        ctx.obj.config_data["consumer_key"],
+        ctx.obj.config_data["consumer_secret"],
+        ctx.obj.config_data["access_token"],
+        ctx.obj.config_data["access_token_secret"],
+    )
     ctx.obj.api = api
 
 
@@ -52,16 +40,30 @@ def cli(ctx: click.Context):
 @click.pass_obj
 def authorize(config: Config, consumer_key: str, consumer_secret: str):
     """Authorize OAuth and saves authentication info."""
-    _, access_token, access_token_secret = create_api(consumer_key, consumer_secret)
-    write_config(
-        config.config_path,
+    try:
+        _, access_token, access_token_secret = create_api(consumer_key, consumer_secret)
+    except TweepError as e:
+        # what the hell tweepy?
+        if type(e.args[0].args[0]) == str:
+            http_status = e.args[0].response.status_code
+        else:
+            # For no reason, this is TweepError(TweepError(BadToken(...)))
+            http_status = e.args[0].args[0].response.status_code
+
+        if http_status == 401:
+            raise click.ClickException("Unauthorized, check your inputs again.")
+        elif http_status >= 500:
+            raise click.ClickException("A server error has occured, try again later.")
+        raise e
+
+    Config(
         {
             "consumer_key": consumer_key,
             "consumer_secret": consumer_secret,
             "access_token": access_token,
             "access_token_secret": access_token_secret,
         },
-    )
+    ).save()
 
 
 @cli.command()
@@ -142,24 +144,32 @@ def download(
     else:
         max_datetime = datetime.max
 
-    method = config.api.favorites if like else config.api.user_timeline
-    click.echo("Fetching tweets...")
-    tweets_to_download = list(
-        get_tweets(
-            method,
-            username,
-            retweet,
-            since_id,
-            max_id,
-            since_datetime,
-            max_datetime,
-            count,
+    try:
+        method = config.api.favorites if like else config.api.user_timeline
+        click.echo("Fetching tweets...")
+        tweets_to_download = list(
+            get_tweets(
+                method,
+                username,
+                retweet,
+                since_id,
+                max_id,
+                since_datetime,
+                max_datetime,
+                count,
+            )
         )
-    )
 
-    click.echo("Fetching media metadatas...")
-    medias = get_media_metadata(config.api, tweets_to_download)
-    download_medias(medias, output_dir, format_, ignore_existing)
+        click.echo("Fetching media metadatas...")
+        medias = get_media_metadata(config.api, tweets_to_download)
+        download_medias(medias, output_dir, format_, ignore_existing)
+    except TweepError as e:
+        http_status = e.response.status_code
+        if http_status == 401:
+            raise click.ClickException("Unauthorized, please run authorize again.")
+        elif http_status >= 500:
+            raise click.ClickException("A server error has occured, try again later.")
+        raise e
 
 
 if __name__ == "__main__":

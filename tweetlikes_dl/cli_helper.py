@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 from typing import List, Tuple, Union
@@ -13,16 +12,6 @@ def download_file(url: str, target_path: Union[os.PathLike, str]):
         with open(target_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
-
-
-def load_config(config_path: Union[os.PathLike, str]) -> dict:
-    with open(config_path, "r") as f:
-        return json.load(f)
-
-
-def write_config(config_path: Union[os.PathLike, str], data: dict):
-    with open(config_path, "w") as f:
-        json.dump(data, f)
 
 
 def parse_format(user_format: str, media: dict) -> Tuple[str, str]:
