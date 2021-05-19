@@ -167,6 +167,8 @@ def download(
         http_status = e.response.status_code
         if http_status == 401:
             raise click.ClickException("Unauthorized, please run authorize again.")
+        elif http_status == 404:
+            raise click.ClickException("User not found.")
         elif http_status >= 500:
             raise click.ClickException("A server error has occured, try again later.")
         raise e
