@@ -14,7 +14,24 @@ from tweetlikes_dl.helper import create_api, get_media_metadata, get_tweets
 from tweetlikes_dl.config import Config
 
 
-@click.group()
+class AliasedGroup(click.Group):
+    _ALIASES = {
+        "dl": "download",
+        "auth": "authorize",
+    }
+
+    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:
+        rv = click.Group.get_command(self, ctx, cmd_name)
+        if rv is not None:
+            return rv
+
+        if cmd_name in self._ALIASES:
+            return click.Group.get_command(self, ctx, self._ALIASES[cmd_name])
+
+        return None
+
+
+@click.group(cls=AliasedGroup)
 @click.pass_context
 def cli(ctx: click.Context):
     """A simple tool to download twitter medias."""
