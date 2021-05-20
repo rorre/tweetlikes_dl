@@ -35,11 +35,11 @@ class AliasedGroup(click.Group):
 @click.pass_context
 def cli(ctx: click.Context):
     """A simple tool to download twitter medias."""
-    if not os.path.exists(Config.config_path):
-        raise UsageError("Please run authorize first!")
-
     if ctx.invoked_subcommand == "authorize":
         return
+
+    if not os.path.exists(Config.config_path):
+        raise UsageError("Please run authorize first!")
 
     ctx.obj = Config.load()
     api, _, _ = create_api(
