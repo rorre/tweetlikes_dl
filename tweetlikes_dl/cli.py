@@ -52,6 +52,14 @@ def cli(ctx: click.Context):
 
 
 @cli.command()
+@click.pass_obj
+def profile(config: Config):
+    """Prints currently authorized user."""
+    me = config.api.me()
+    click.echo(f"Authorized as {me.name} (@{me.screen_name})")
+
+
+@cli.command()
 @click.argument("consumer_key")
 @click.argument("consumer_secret")
 def authorize(consumer_key: str, consumer_secret: str):
@@ -150,9 +158,11 @@ def authorize(consumer_key: str, consumer_secret: str):
     default=False,
     help="Ignore existing files. [Default: Replaces all downloaded files]",
 )
+@click.pass_context
 @click.pass_obj
 def download(
     config: Config,
+    ctx: click.Context,
     username: Optional[str],
     count: int,
     since_date: Optional[str],
@@ -167,6 +177,7 @@ def download(
     ignore_existing: bool,
 ):
     """Batch download medias from user's timeline or likes."""
+    ctx.invoke(profile)
     if since_date:
         since_datetime = parse(since_date)
     else:
