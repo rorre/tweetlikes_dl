@@ -84,8 +84,53 @@ def authorize(config: Config, consumer_key: str, consumer_secret: str):
 
 
 @cli.command()
-@click.option("--username", "-u", default=None, help="Username to lookup.")
-@click.option("--count", "-c", default=1000, help="Number of liked post to download.")
+@click.option(
+    "--username",
+    "-u",
+    default=None,
+    help="Username to lookup. [Default: Current authenticated user]",
+)
+@click.option(
+    "--count",
+    "-c",
+    default=1000,
+    help="Number of liked post to download. [Default: 1000]",
+)
+@click.option(
+    "--retweet",
+    "-r",
+    is_flag=True,
+    default=False,
+    help="Also download user's retweets.",
+)
+@click.option(
+    "--only-retweet",
+    is_flag=True,
+    default=False,
+    help="Download only user's retweets.",
+)
+@click.option(
+    "--like",
+    "-l",
+    is_flag=True,
+    default=False,
+    help="Download user's likes instead of timeline and retweets.",
+)
+@click.option(
+    "--output-dir",
+    "-o",
+    type=str,
+    default="output",
+    help="Set output directory where all medias will be downloaded. [Default: output]",
+)
+@click.option(
+    "--format",
+    "-f",
+    "format_",
+    type=str,
+    default="{username}/{id}-{filename}",
+    help="Format output filename with tokens. (Available tokens: id, extension, filename, url, username)",
+)
 @click.option("--max-date", default=None, help="Most recent date to download.")
 @click.option("--since-date", default=None, help="Oldest date to download.")
 @click.option(
@@ -101,39 +146,10 @@ def authorize(config: Config, consumer_key: str, consumer_secret: str):
     help="Stops downloading after meeting this ID. (Oldest one)",
 )
 @click.option(
-    "--retweet",
-    "-r",
-    is_flag=True,
-    default=False,
-    help="Also download user's retweets.",
-)
-@click.option(
-    "--like",
-    "-l",
-    is_flag=True,
-    default=False,
-    help="Download user's likes instead of timeline (and retweets).",
-)
-@click.option(
-    "--output-dir",
-    "-o",
-    type=str,
-    default="output",
-    help="Set output directory where all medias will be downloaded.",
-)
-@click.option(
-    "--format",
-    "-f",
-    "format_",
-    type=str,
-    default="{username}/{id}-{filename}",
-    help="Format output filename with tokens. (Available tokens: id, extension, filename, url, username)",
-)
-@click.option(
     "--ignore-existing",
     is_flag=True,
     default=False,
-    help="Ignore existing files, defaults to replacing all previously downloaded files.",
+    help="Ignore existing files. [Default: Replaces all downloaded files]",
 )
 @click.pass_obj
 def download(
@@ -145,6 +161,7 @@ def download(
     since_id: int,
     max_id: int,
     retweet: bool,
+    only_retweet: bool,
     output_dir: str,
     format_: str,
     like: bool,
@@ -161,6 +178,11 @@ def download(
     else:
         max_datetime = datetime.max
 
+    condition = None
+    if only_retweet:
+        retweet = True
+        condition = lambda x: hasattr(x, "retweeted_status")  # noqa
+
     try:
         method = config.api.favorites if like else config.api.user_timeline
         click.echo("Fetching tweets...")
@@ -174,6 +196,7 @@ def download(
                 since_datetime,
                 max_datetime,
                 count,
+                condition,
             )
         )
 

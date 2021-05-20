@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Any, Iterator, List, Optional, Tuple
+from typing import Any, Callable, Iterator, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import click
@@ -37,6 +37,7 @@ def get_tweets(
     since_datetime: datetime,
     max_datetime: datetime,
     limit: int,
+    condition: Callable[[Status], bool] = None,
 ) -> Iterator[Status]:
 
     tweet: Status
@@ -54,7 +55,8 @@ def get_tweets(
         if tweet.created_at > max_datetime:
             continue
 
-        yield tweet
+        if condition and condition(tweet):
+            yield tweet
 
 
 def get_media_url(media: dict):
