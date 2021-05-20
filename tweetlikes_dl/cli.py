@@ -54,8 +54,7 @@ def cli(ctx: click.Context):
 @cli.command()
 @click.argument("consumer_key")
 @click.argument("consumer_secret")
-@click.pass_obj
-def authorize(config: Config, consumer_key: str, consumer_secret: str):
+def authorize(consumer_key: str, consumer_secret: str):
     """Authorize OAuth and saves authentication info."""
     try:
         _, access_token, access_token_secret = create_api(consumer_key, consumer_secret)
