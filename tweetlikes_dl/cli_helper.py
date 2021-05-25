@@ -50,7 +50,7 @@ def download_medias(
                     if e.response.status_code < 500:
                         # Skip current download if status code is not server related.
                         click.echo(f"{target_path}: {str(e)}.")
-                        continue
+                        break
                 except requests.exceptions.RequestException:
                     pass
                 attempt_count += 1
