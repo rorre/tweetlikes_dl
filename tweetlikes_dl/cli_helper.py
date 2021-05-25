@@ -42,4 +42,17 @@ def download_medias(
                 click.echo(f"{target_path}: Skipping.")
                 continue
 
-            download_file(media["url"], target_path)
+            attempt_count = 1
+            while attempt_count <= 5:
+                try:
+                    download_file(media["url"], target_path)
+                except requests.exceptions.HTTPError as e:
+                    if e.response.status_code < 500:
+                        # Skip current download if status code is not server related.
+                        click.echo(f"{target_path}: {str(e)}.")
+                        continue
+                except requests.exceptions.RequestException:
+                    pass
+                attempt_count += 1
+            else:
+                click.echo(f"{target_path}: Skipping due to download attempt limit.")
