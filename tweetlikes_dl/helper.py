@@ -55,7 +55,7 @@ def get_tweets(
         if tweet.created_at > max_datetime:
             continue
 
-        if condition and condition(tweet):
+        if not condition or (condition and condition(tweet)):
             yield tweet
 
 
