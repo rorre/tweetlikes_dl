@@ -46,6 +46,7 @@ def download_medias(
             while attempt_count <= 5:
                 try:
                     download_file(media["url"], target_path)
+                    break
                 except requests.exceptions.HTTPError as e:
                     if e.response.status_code < 500:
                         # Skip current download if status code is not server related.
