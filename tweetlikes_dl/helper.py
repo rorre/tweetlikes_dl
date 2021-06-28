@@ -47,6 +47,7 @@ def get_tweets(
         include_rts=include_retweet,
         include_entities=True,
         tweet_mode="extended",
+        count=200,
         since_id=since_id,
         max_id=max_id,
     ).items(limit):
