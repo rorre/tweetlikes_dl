@@ -62,14 +62,14 @@ def get_tweets(
 
 def get_media_url(media: dict):
     if media["type"] == "photo":
-        return media["media_url_https"]
+        return [media["media_url_https"]]
     else:
         available_videos = media["video_info"]["variants"]
         valid_videos = list(
             filter(lambda x: x["content_type"] == "video/mp4", available_videos)
         )
         valid_videos.sort(key=lambda x: x["bitrate"], reverse=True)
-        return valid_videos[0]["url"]
+        return [video["url"] for video in valid_videos]
 
 
 def get_medias(api: tweepy.API, tweets: List[Status]):
@@ -78,7 +78,7 @@ def get_medias(api: tweepy.API, tweets: List[Status]):
         if "extended_entities" in tweet._json:
             for media in tweet.extended_entities["media"]:
                 media_url = get_media_url(media)
-                filename = os.path.basename(urlparse(media_url).path)
+                filename = os.path.basename(urlparse(media_url[0]).path)
 
                 # Set metadata to retweeted status, if it's a retweet.
                 if hasattr(tweet, "retweeted_status"):
