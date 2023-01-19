@@ -6,7 +6,7 @@ authors = ["Rendy Arya Kemal <rendyarya22@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-tweepy = "^3.10.0"
+tweepy = "^4.12.1"
 appdirs = "^1.4.4"
 click = "^8.0.0"
 requests = "^2.25.1"
@@ -15,9 +15,9 @@ python-dateutil = "^2.8.2"
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
 mypy = "^0.961"
-black = {version = "^21.5b1", allow-prereleases = true}
 flake8 = "^3.9.2"
 isort = "^5.8.0"
+black = "^22.12.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

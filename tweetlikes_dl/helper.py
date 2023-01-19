@@ -14,7 +14,7 @@ def create_api(
     access_token: Optional[str] = None,
     access_token_secret: Optional[str] = None,
 ) -> Tuple[tweepy.API, str, str]:
-    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth = tweepy.OAuth1UserHandler(consumer_key, consumer_secret, callback="oob")
     if access_token and access_token_secret:
         auth.set_access_token(access_token, access_token_secret)
     else:
@@ -24,7 +24,7 @@ def create_api(
         verifier = click.prompt("PIN")
         auth.get_access_token(verifier)
 
-    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+    api = tweepy.API(auth, wait_on_rate_limit=True)
     return (api, auth.access_token, auth.access_token_secret)
 
 
@@ -51,6 +51,7 @@ def get_tweets(
         since_id=since_id,
         max_id=max_id,
     ).items(limit):
+        tweet.created_at = tweet.created_at.replace(tzinfo=None)
         if tweet.created_at < since_datetime:
             break
         if tweet.created_at > max_datetime:

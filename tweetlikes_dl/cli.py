@@ -7,7 +7,7 @@ import click
 
 from dateutil.parser import parse
 from pytest import UsageError
-from tweepy import TweepError
+from tweepy.errors import TweepyException
 
 from tweetlikes_dl.cli_helper import download_medias
 from tweetlikes_dl.helper import create_api, get_media_metadata, get_tweets
@@ -63,7 +63,7 @@ def cli(ctx: click.Context, quiet):
 @click.pass_obj
 def profile(config: Config):
     """Prints currently authorized user."""
-    me = config.api.me()
+    me = config.api.verify_credentials()
     click.echo(f"Authorized as {me.name} (@{me.screen_name})")
 
 
@@ -74,7 +74,7 @@ def authorize(consumer_key: str, consumer_secret: str):
     """Authorize OAuth and saves authentication info."""
     try:
         _, access_token, access_token_secret = create_api(consumer_key, consumer_secret)
-    except TweepError as e:
+    except TweepyException as e:
         # what the hell tweepy?
         if type(e.args[0].args[0]) == str:
             http_status = e.args[0].response.status_code
@@ -221,7 +221,7 @@ def download(
         click.echo("Fetching media metadatas...")
         medias = get_media_metadata(config.api, tweets_to_download)
         download_medias(medias, output_dir, format_, ignore_existing)
-    except TweepError as e:
+    except TweepyException as e:
         http_status = e.response.status_code
         if http_status == 401:
             raise click.ClickException("Unauthorized, please run authorize again.")
