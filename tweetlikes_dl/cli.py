@@ -202,7 +202,7 @@ def download(
         condition = lambda x: hasattr(x, "retweeted_status")  # noqa
 
     try:
-        method = config.api.favorites if like else config.api.user_timeline
+        method = config.api.get_favorites if like else config.api.user_timeline
         click.echo("Fetching tweets...")
         tweets_to_download = list(
             get_tweets(
